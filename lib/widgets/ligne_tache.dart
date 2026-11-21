@@ -21,10 +21,11 @@ class LigneTache extends StatelessWidget {
     final bool enRetard = estEnRetard(tache, aujourdhui: aujourdhui);
 
     return ListTile(
-      // Case à cocher.
-      leading: Checkbox(value: tache.faite, onChanged: onChangerEtat),
-
-      // Titre de la tâche.
+      leading: Checkbox(
+        key: ValueKey('case-${tache.id}'),
+        value: tache.faite,
+        onChanged: onChangerEtat,
+      ),
       title: Text(
         tache.titre,
         maxLines: 1,
@@ -35,24 +36,18 @@ class LigneTache extends StatelessWidget {
               : TextDecoration.none,
         ),
       ),
-
-      // Priorité et échéance.
       subtitle: Text(
         '${libellePriorite(tache.priorite)} - '
         '${libelleEcheance(tache.echeance)}'
         '${enRetard ? ' - En retard' : ''}',
         style: TextStyle(color: enRetard ? Colors.red : null),
       ),
-
-      // Ouvrir le détail quand on clique sur la ligne.
       onTap: onOuvrir,
-
       trailing: const Icon(Icons.chevron_right),
     );
   }
 }
 
-// Transformer la priorité en texte.
 String libellePriorite(Priorite priorite) {
   if (priorite == Priorite.basse) {
     return 'Priorité basse';

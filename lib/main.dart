@@ -6,6 +6,7 @@ import 'modele/taches.dart';
 import 'donnees/exemples.dart';
 import 'widgets/ligne_tache.dart';
 import 'pages/detail_tache.dart';
+import 'pages/ajouter_tache.dart';
 
 void main() {
   runApp(const MonApplication());
@@ -38,14 +39,8 @@ class ListeTachesPage extends StatefulWidget {
 }
 
 class _ListeTachesPageState extends State<ListeTachesPage> {
-  // Liste de toutes les tâches.
   List<Tache> taches = [];
-
-  // Filtre sélectionné.
   String filtreSelectionne = 'Toutes';
-
-  // Numéro pour créer des identifiants uniques.
-  int prochainNumero = 7;
 
   @override
   void initState() {
@@ -53,7 +48,6 @@ class _ListeTachesPageState extends State<ListeTachesPage> {
     chargerTaches();
   }
 
-  // Charger les tâches depuis le JSON.
   void chargerTaches() {
     final List<dynamic> donneesJson =
         jsonDecode(tachesExempleJson) as List<dynamic>;
@@ -66,28 +60,29 @@ class _ListeTachesPageState extends State<ListeTachesPage> {
       );
 
       final Tache nouvelleTache = tacheDepuisJson(json);
-
       listeTaches.add(nouvelleTache);
     }
 
     taches = listeTaches;
   }
 
-  // Ajouter une nouvelle tâche.
-  void ajouterTache() {
-    final Tache nouvelleTache = Tache(
-      id: 't$prochainNumero',
-      titre: 'Nouvelle tâche',
-      priorite: Priorite.normale,
+  Future<void> ouvrirFormulaire() async {
+    final Tache? nouvelleTache = await Navigator.push<Tache>(
+      context,
+      MaterialPageRoute(builder: (context) => const AjouterTachePage()),
     );
 
-    setState(() {
-      taches.add(nouvelleTache);
-      prochainNumero++;
-    });
+    if (!mounted) {
+      return;
+    }
+
+    if (nouvelleTache != null) {
+      setState(() {
+        taches.add(nouvelleTache);
+      });
+    }
   }
 
-  // Modifier l'état d'une tâche depuis la liste.
   void changerEtatTache(Tache tache, bool? nouvelleValeur) {
     if (nouvelleValeur == null) {
       return;
@@ -122,7 +117,6 @@ class _ListeTachesPageState extends State<ListeTachesPage> {
     });
   }
 
-  // Récupérer les tâches correspondant au filtre.
   List<Tache> obtenirTachesAffichees() {
     final List<Tache> resultat = [];
 
@@ -139,7 +133,6 @@ class _ListeTachesPageState extends State<ListeTachesPage> {
     return resultat;
   }
 
-  // Construire un bouton de filtre.
   Widget construireFiltre(String nomFiltre) {
     return ChoiceChip(
       label: Text(nomFiltre),
@@ -154,7 +147,6 @@ class _ListeTachesPageState extends State<ListeTachesPage> {
     );
   }
 
-  // Ouvrir le détail et récupérer la tâche modifiée.
   Future<void> ouvrirDetail(Tache tache) async {
     final Tache? resultat = await Navigator.push<Tache>(
       context,
@@ -164,17 +156,14 @@ class _ListeTachesPageState extends State<ListeTachesPage> {
       ),
     );
 
-    // Vérifier que la page existe toujours.
     if (!mounted) {
       return;
     }
 
-    // Si aucune modification n'a été retournée, ne rien faire.
     if (resultat == null) {
       return;
     }
 
-    // Chercher la tâche dans la liste complète.
     int indexTache = -1;
 
     for (int i = 0; i < taches.length; i++) {
@@ -188,7 +177,6 @@ class _ListeTachesPageState extends State<ListeTachesPage> {
       return;
     }
 
-    // Remplacer l'ancienne tâche par la nouvelle.
     setState(() {
       taches[indexTache] = resultat;
     });
@@ -196,22 +184,15 @@ class _ListeTachesPageState extends State<ListeTachesPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Calculer le bilan global.
     final resultatBilan = bilan(taches);
-
     final int nombreAFaire = resultatBilan.total - resultatBilan.faites;
-
-    // Récupérer les tâches filtrées.
     final List<Tache> tachesAffichees = obtenirTachesAffichees();
-
     final DateTime aujourdhui = DateTime.now();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Mes tâches'), centerTitle: true),
-
       body: Column(
         children: [
-          // Compteur global.
           Padding(
             padding: const EdgeInsets.all(16),
             child: Text(
@@ -219,8 +200,6 @@ class _ListeTachesPageState extends State<ListeTachesPage> {
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
-
-          // Filtres.
           Wrap(
             spacing: 8,
             children: [
@@ -229,10 +208,7 @@ class _ListeTachesPageState extends State<ListeTachesPage> {
               construireFiltre('Faites'),
             ],
           ),
-
           const SizedBox(height: 10),
-
-          // Liste des tâches.
           Expanded(
             child: tachesAffichees.isEmpty
                 ? const Center(child: Text('Aucune tâche à afficher'))
@@ -256,9 +232,9 @@ class _ListeTachesPageState extends State<ListeTachesPage> {
           ),
         ],
       ),
-
       floatingActionButton: FloatingActionButton(
-        onPressed: ajouterTache,
+        key: const ValueKey('boutonAjouterTache'),
+        onPressed: ouvrirFormulaire,
         child: const Icon(Icons.add),
       ),
     );
